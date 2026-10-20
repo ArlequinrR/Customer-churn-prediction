@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Environment variables
+.env
+
+# Trained models
+models/*.joblib
+models/*.pkl
+models/threshold.json
+
+# Generated predictions
+outputs/
+
+# Temporary files
+.DS_Store
