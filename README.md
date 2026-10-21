@@ -47,24 +47,28 @@ A churn recall of approximately 75% indicates that the model identified around t
 
 ## Repository Structure
 
-```text
 customer-churn-prediction/
-├── README.md
+├── api/
+│   ├── __init__.py
+│   └── main.py
 ├── data/
-│   └── README.md                # Instructions for the external CSV
+│   └── README.md
 ├── notebooks/
 │   └── 01_customer_churn_analysis.ipynb
 ├── src/
 │   ├── __init__.py
-│   ├── preprocessing.py         # Feature selection and preprocessing
-│   ├── train.py                 # XGBoost training and artifact saving
-│   └── evaluate.py              # Holdout evaluation
+│   ├── preprocessing.py
+│   ├── train.py
+│   ├── evaluate.py
+│   └── predict.py
 ├── models/
-│   └── .gitkeep                 # Generated model artifacts are ignored
+│   └── .gitkeep
+├── outputs/
+├── create_sample.py
 ├── requirements.txt
+├── README.md
 ├── .gitignore
 └── LICENSE
-```
 
 ## Installation
 
@@ -113,9 +117,110 @@ The script saves the fitted pipeline to `models/churn_model.joblib` and the sele
 
 - During earlier development, test metrics from multiple experiments were inspected; therefore, the reported holdout results should **not** be presented as a fully untouched, unbiased final benchmark.
 - The modular training script trains XGBoost only; the three-model comparison remains in the notebook.
-- The packaged project has not been end-to-end tested against the original CSV because the CSV was not provided.
+- The training and prediction workflow has been tested locally. Batch predictions and FastAPI predictions were verified to produce matching results for the same five      sample customers.
 - Model performance may shift across populations and time; no external or production validation has been performed.
 - The threshold is optimized for F1, not expected business profit.
+
+## Batch Predictions
+
+The trained model can generate churn predictions for new customers
+without requiring an API.
+
+Run:
+
+```bash
+python -m src.predict --input data/new_customers.csv
+```
+
+The predictions are saved to:
+
+`outputs/churn_predictions.csv`
+
+The output includes:
+
+- `churn_probability`: estimated probability of customer churn.
+- `predicted_churn`: binary prediction based on the selected threshold.
+
+## FastAPI — Model Inference
+
+This project includes a REST API built with FastAPI to make
+predictions available to other applications.
+
+The API loads the previously trained XGBoost pipeline and
+classification threshold.
+
+### Start the API
+
+First, install the dependencies and train the model using
+the instructions above.
+
+Then run:
+
+```bash
+python -m uvicorn api.main:app --reload
+```
+
+Open the interactive API documentation:
+
+http://127.0.0.1:8000/docs
+
+### Available Endpoints
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| GET | `/` | Basic API information |
+| GET | `/health` | Check API and model status |
+| POST | `/predict` | Generate customer churn predictions |
+
+### Prediction Request
+
+The `/predict` endpoint accepts a JSON object containing
+a list of customers:
+
+```json
+{
+  "customers": [
+    {
+      "feature_1": "value",
+      "feature_2": 10
+    }
+  ]
+}
+```
+
+The fields above illustrate the request structure.
+Actual requests must include the features expected by
+the trained model.
+
+### Prediction Response
+
+Example response:
+
+```json
+{
+  "model": "Customer Churn Prediction",
+  "threshold": 0.6,
+  "predictions": [
+    {
+      "churn_probability": 0.1756,
+      "predicted_churn": 0
+    }
+  ]
+}
+```
+
+### Deployment Status
+
+The API has been tested locally using HTTP requests.
+
+It is not deployed to a public server.
+
+For periodic batch predictions, the Python prediction
+script can be used without FastAPI.
+
+
+
+
 
 ## Next Steps
 

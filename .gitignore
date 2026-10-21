@@ -19,3 +19,6 @@ outputs/
 
 # Temporary files
 .DS_Store
+
+# Temporary API test data
+data/api_request.json
